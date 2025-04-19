@@ -8,6 +8,8 @@ module RubyLLM
   class Schema
     delegate_missing_to :@schema
 
+    ##
+    # @param schema [Hash]
     def initialize(schema = {})
       @schema = deep_transform_keys_in_object(schema.to_h.dup, &:to_sym)
     end
