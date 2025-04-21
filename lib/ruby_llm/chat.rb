@@ -85,7 +85,6 @@ module RubyLLM
       add_message role: :user, content: Content.new(message, with)
       complete(&)
     end
-
     alias say ask
 
     def with_instructions(instructions, replace: false)
