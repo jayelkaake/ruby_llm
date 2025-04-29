@@ -11,7 +11,7 @@ module RubyLLM
     ##
     # @param schema [Hash]
     def initialize(schema = {})
-      @schema = deep_transform_keys_in_object(schema.to_h.dup, &:to_sym)
+      @schema = Util.deep_transform_keys_in_object(schema.to_h.dup, &:to_sym)
     end
 
     def [](key)
@@ -19,7 +19,7 @@ module RubyLLM
     end
 
     def []=(key, new_value)
-      @schema[key.to_sym] = deep_transform_keys_in_object(new_value, &:to_sym)
+      @schema[key.to_sym] = Util.deep_transform_keys_in_object(new_value, &:to_sym)
     end
 
     # Adds the new_value into the new_key key for every sub-schema that is of type: :object
@@ -54,25 +54,6 @@ module RubyLLM
       end
 
       schema[:properties]&.transform_values! { |value| add_to_each_object_type(new_key, new_value, value) }
-    end
-
-    ##
-    # Recursively transforms keys in a hash or array to symbols.
-    # Borrowed from ActiveSupport's Hash#deep_transform_keys
-    # @param object [Object] The object to transform.
-    # @param block [Proc] The block to apply to each key.
-    # @return [Object] The transformed object.
-    def deep_transform_keys_in_object(object, &block)
-      case object
-      when Hash
-        object.each_with_object({}) do |(key, value), result|
-          result[yield(key)] = deep_transform_keys_in_object(value, &block)
-        end
-      when Array
-        object.map { |e| deep_transform_keys_in_object(e, &block) }
-      else
-        object
-      end
     end
   end
 end

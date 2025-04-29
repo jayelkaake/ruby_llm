@@ -10,8 +10,8 @@ module RubyLLM
         def format_content(content) # rubocop:disable Metrics/MethodLength
           return content unless content.is_a?(Array)
 
-          content.map do |part|
-            case part[:type]
+          Util.deep_stringify_keys(content).map do |part|
+            case part['type']
             when 'image'
               format_image(part)
             when 'input_audio'
@@ -28,7 +28,7 @@ module RubyLLM
           {
             type: 'image_url',
             image_url: {
-              url: format_data_url(part[:source]),
+              url: format_data_url(part['source']),
               detail: 'auto'
             }
           }
@@ -37,7 +37,7 @@ module RubyLLM
         def format_audio(part)
           {
             type: 'input_audio',
-            input_audio: part[:input_audio]
+            input_audio: part['input_audio']
           }
         end
 
@@ -45,17 +45,17 @@ module RubyLLM
           {
             type: 'file',
             file: {
-              filename: File.basename(part[:source]),
-              file_data: "data:application/pdf;base64,#{Base64.strict_encode64(part[:content])}"
+              filename: File.basename(part['source']),
+              file_data: "data:application/pdf;base64,#{Base64.strict_encode64(part['content'])}"
             }
           }
         end
 
         def format_data_url(source)
-          if source[:type] == 'base64'
-            "data:#{source[:media_type]};base64,#{source[:data]}"
+          if source['type'] == 'base64'
+            "data:#{source['media_type']};base64,#{source['data']}"
           else
-            source[:url]
+            source['url']
           end
         end
       end

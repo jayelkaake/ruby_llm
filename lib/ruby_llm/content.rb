@@ -28,6 +28,10 @@ module RubyLLM
       @parts
     end
 
+    def as_json
+      to_a
+    end
+
     def format
       return @parts.first[:text] if @parts.size == 1 && @parts.first[:type] == 'text'
 
