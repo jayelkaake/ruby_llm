@@ -66,7 +66,9 @@ module RubyLLM
       end
 
       def to_llm
-        @chat ||= RubyLLM.chat(model: model_id)
+        return @chat if defined?(@chat)
+
+        @chat = RubyLLM.chat(model: model_id)
 
         # Load existing messages into chat
         messages.each do |msg|
