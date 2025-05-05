@@ -19,9 +19,6 @@ module RubyLLM
                    -> { order(created_at: :asc) },
                    class_name: @message_class,
                    dependent: :destroy
-
-          delegate :add_message,
-                   to: :to_llm
         end
 
         def acts_as_message(chat_class: 'Chat', tool_call_class: 'ToolCall', touch_chat: false) # rubocop:disable Metrics/MethodLength
@@ -131,10 +128,16 @@ module RubyLLM
         self
       end
 
-      def ask(message, &)
-        message = { role: :user, content: message }
+      def add_message(...)
+        to_llm.add_message(...)
+        self
+      end
+
+      def ask(content, &)
+        message = { role: :user, content: }
         messages.create!(**message)
-        complete(&)
+        to_llm.ask(content, &)
+        self
       end
 
       def complete(...)
@@ -201,6 +204,7 @@ module RubyLLM
         RubyLLM::Message.new(
           role: role.to_sym,
           content: extract_content,
+          content_schema: content_schema,
           tool_calls: extract_tool_calls,
           tool_call_id: extract_tool_call_id,
           input_tokens: input_tokens,
@@ -227,7 +231,14 @@ module RubyLLM
       end
 
       def extract_content
-        content
+        return content unless content_schema.present?
+
+        # If object schema type but no properties it means json_mode response requested (no specific schema but object response)
+        if content_schema['type'].to_s != :object.to_s || content_schema['properties'].to_h.keys.any?
+          { 'result' => content }
+        else
+          content
+        end.to_json
       end
     end
   end

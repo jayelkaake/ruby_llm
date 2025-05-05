@@ -11,6 +11,8 @@ module RubyLLM
           return content unless content.is_a?(Array)
 
           Util.deep_stringify_keys(content).map do |part|
+            next part unless part.is_a?(Hash)
+
             case part['type']
             when 'image'
               format_image(part)

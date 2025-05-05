@@ -19,7 +19,8 @@ module RubyLLM
       @output_tokens = options[:output_tokens]
       @model_id = options[:model_id]
       @tool_call_id = options[:tool_call_id]
-      @content_schema = options[:content_schema]
+
+      @content_schema = options[:content_schema].is_a?(Hash) ? Schema.new(options[:content_schema]) : options[:content_schema]
 
       ensure_valid_role
     end
@@ -63,6 +64,7 @@ module RubyLLM
 
     def json_response
       return nil if @content.nil?
+      return @content unless @content.is_a?(String)
 
       JSON.parse(@content)
     end

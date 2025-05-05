@@ -87,6 +87,14 @@ module RubyLLM
       def parameters
         @parameters ||= {}
       end
+
+      def responds_with(type = nil, **schema)
+        @response_schema = Schema.new(type, **schema)
+      end
+
+      def response_schema
+        @response_schema || Schema.new(:object)
+      end
     end
 
     def name
@@ -106,6 +114,10 @@ module RubyLLM
 
     def parameters
       self.class.parameters
+    end
+
+    def response_schema
+      self.class.response_schema
     end
 
     def call(args)

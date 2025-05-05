@@ -67,19 +67,12 @@ module RubyLLM
     # @param schema [Hash] The schema for the response format. It can be a JSON schema or a simple hash.
     # @return [Chat] (self)
     def with_response_format(type = nil, **schema)
-      schema_hash = if type.is_a?(Symbol) || type.is_a?(String)
-                      { type: type == :json ? :object : type }
-                    elsif type.is_a?(Hash)
-                      type
-                    else
-                      {}
-                    end.merge(schema)
-
-      @response_schema = Schema.new(schema_hash)
+      @response_schema = Schema.new(type, **schema)
 
       self
     end
     alias with_structured_response with_response_format
+    alias with_response_schema with_response_format
 
     def ask(message = nil, with: {}, &)
       add_message role: :user, content: Content.new(message, with)
@@ -150,11 +143,10 @@ module RubyLLM
 
       add_message response
 
-      @response_schema = nil # Reset the response schema after completion of this chat thread
-
       if response.tool_call?
         handle_tool_calls(response, &)
       else
+        @response_schema = nil # Reset the response schema after completion of this chat thread
         response
       end
     end
@@ -171,7 +163,15 @@ module RubyLLM
       response.tool_calls.each_value do |tool_call|
         @on[:new_message]&.call
         result = execute_tool tool_call
-        message = add_tool_result tool_call.id, result
+        tool = tools[tool_call.name.to_sym]
+
+        content_schema = tool.response_schema
+        if content_schema.is_a?(Hash)
+          content_schema = Util.deep_symbolize_keys(content_schema)
+          content_schema = { result: content_schema } if content_schema[:type].to_s == :object.to_s && content_schema[:properties].to_h.keys.any?
+        end
+
+        message = add_tool_result(tool_call.id, result, content_schema)
         @on[:end_message]&.call(message)
       end
 
@@ -184,10 +184,11 @@ module RubyLLM
       tool.call(args)
     end
 
-    def add_tool_result(tool_use_id, result)
+    def add_tool_result(tool_use_id, result, content_schema = nil)
       add_message(
         role: :tool,
-        content: result.is_a?(Hash) && result[:error] ? result[:error] : result.to_s,
+        content: result,
+        content_schema: content_schema ? Schema.new(content_schema) : nil,
         tool_call_id: tool_use_id
       )
     end

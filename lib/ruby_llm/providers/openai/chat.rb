@@ -51,9 +51,16 @@ module RubyLLM
 
         def format_messages(messages)
           messages.map do |msg|
+            formatted_content = if msg.role.to_s == :tool.to_s
+                                  # OpenAI's API requires the content to be a string
+                                  msg.content.is_a?(String) ? msg.content : msg.content.to_json
+                                else
+                                  Media.format_content(msg.content)
+                                end
+
             {
               role: format_role(msg.role),
-              content: Media.format_content(msg.content),
+              content: formatted_content,
               tool_calls: format_tool_calls(msg.tool_calls),
               tool_call_id: msg.tool_call_id
             }.compact
