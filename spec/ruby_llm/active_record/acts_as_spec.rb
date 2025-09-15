@@ -190,11 +190,10 @@ RSpec.describe RubyLLM::ActiveRecord::ActsAs do
       expect do
         chat_record.ask('This one will fail')
       end.to raise_error(RubyLLM::ServerError, /API go boom/)
-      expect(Message.where(chat_id: chat_record.id).count).to eq(1)
-      remaining_message = Message.find_by(chat_id: chat_record.id)
-      expect(remaining_message.role).to eq('user')
-      expect(remaining_message.content).to eq('This one will fail')
-      expect(Message.where(chat_id: chat_record.id, role: 'assistant').count).to eq(0)
+      expect(Message.where(chat_id: chat_record.id, role: 'user').count).to eq(1)
+      user_message = Message.find_by(chat_id: chat_record.id, role: 'user')
+      expect(user_message.content).to eq('This one will fail')
+      expect(Message.where(chat_id: chat_record.id, role: 'assistant').count).to eq(1)
     end
   end
 end

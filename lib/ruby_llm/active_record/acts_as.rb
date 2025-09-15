@@ -204,7 +204,7 @@ module RubyLLM
         RubyLLM::Message.new(
           role: role.to_sym,
           content: extract_content,
-          content_schema: content_schema,
+          content_schema: try(:content_schema),
           tool_calls: extract_tool_calls,
           tool_call_id: extract_tool_call_id,
           input_tokens: input_tokens,
@@ -231,7 +231,7 @@ module RubyLLM
       end
 
       def extract_content
-        return content unless content_schema.present?
+        return content unless try(:content_schema).present?
 
         # If object schema type but no properties it means json_mode response requested (no specific schema but object response)
         if content_schema['type'].to_s != :object.to_s || content_schema['properties'].to_h.keys.any?
